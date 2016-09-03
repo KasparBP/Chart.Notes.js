@@ -1,0 +1,27 @@
+{
+  "name": "chart.comment.js",
+  "version": "1.0.0",
+  "description": "Chart.JS Plugin for displaying arbitrary comments",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KasparBP/Chart.Comments.js.git"
+  },
+  "author": "Kaspar Bach Pedersen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KasparBP/Chart.Comments.js/issues"
+  },
+  "homepage": "https://github.com/KasparBP/Chart.Comments.js#readme",
+  "dependencies": {
+    "chart.js": "^2.2.2"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-jshint": "^2.0.1",
+    "jshint": "^2.9.3"
+  }
+}
