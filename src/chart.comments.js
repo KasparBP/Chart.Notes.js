@@ -1,8 +1,19 @@
 var Chart = require('chart.js');
 Chart = typeof(Chart) === 'function' ? Chart : window.Chart;
 
-var commentPlugin = {
-    beforeInit: function(chartInstance) { },
+var helpers = Chart.helpers;
+
+Chart.Comments = Chart.Comments || {};
+// Default options if none are provided
+var defaultOptions = Chart.Comments.defaults = {
+	comments: [] // default to no comments
+};
+
+var CommentsPlugin = Chart.PluginBase.extend({
+    beforeInit: function(chartInstance) { 
+        var options = chartInstance.options;
+        options.comments = helpers.configMerge(options.comments, Chart.Comments.defaults);
+    },
     afterInit: function(chartInstance) { },
 
     resize: function(chartInstance, newChartSize) { },
@@ -26,5 +37,6 @@ var commentPlugin = {
 
     destroy: function(chartInstance) { }
 
-};
-Chart.pluginService.register(commentPlugin);
+});
+module.exports = CommentsPlugin;
+Chart.pluginService.register(new CommentsPlugin());

@@ -21,7 +21,10 @@
   },
   "devDependencies": {
     "gulp": "^3.9.1",
+    "gulp-browserify": "^0.5.1",
     "gulp-jshint": "^2.0.1",
-    "jshint": "^2.9.3"
+    "gulp-rename": "^1.2.2",
+    "jshint": "^2.9.3",
+    "jshint-stylish": "^2.2.1"
   }
 }
