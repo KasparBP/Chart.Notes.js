@@ -1,21 +1,18 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-},{}],2:[function(require,module,exports){
 var Chart = require('chart.js');
 Chart = typeof(Chart) === 'function' ? Chart : window.Chart;
 
 var helpers = Chart.helpers;
 
-Chart.Comments = Chart.Comments || {};
+Chart.Notes = Chart.Notes || {};
 // Default options if none are provided
-var defaultOptions = Chart.Comments.defaults = {
-	comments: [] // default to no comments
+var defaultOptions = Chart.Notes.defaults = {
+	notes: [] // default to no notes
 };
 
-var CommentsPlugin = Chart.PluginBase.extend({
+var NotesPlugin = Chart.PluginBase.extend({
     beforeInit: function(chartInstance) { 
         var options = chartInstance.options;
-        options.comments = helpers.configMerge(options.comments, Chart.Comments.defaults);
+        options.notes = helpers.configMerge(options.notes, Chart.Notes.defaults);
     },
     afterInit: function(chartInstance) { },
 
@@ -41,7 +38,5 @@ var CommentsPlugin = Chart.PluginBase.extend({
     destroy: function(chartInstance) { }
 
 });
-module.exports = CommentsPlugin;
-Chart.pluginService.register(new CommentsPlugin());
-
-},{"chart.js":1}]},{},[2])
+module.exports = NotesPlugin;
+Chart.pluginService.register(new NotesPlugin());

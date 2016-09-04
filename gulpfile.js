@@ -18,7 +18,7 @@ gulp.task('build', function() {
             browserify({
                 ignore: 'chart.js'})
         )
-        .pipe(rename('Chart.Comments.js'))
+        .pipe(rename('Chart.Notes.js'))
         .pipe(gulp.dest('./'))
 });
 

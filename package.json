@@ -1,21 +1,21 @@
 {
-  "name": "chart.comment.js",
+  "name": "chart.notes.js",
   "version": "1.0.0",
-  "description": "Chart.JS Plugin for displaying arbitrary comments",
+  "description": "Chart.JS Plugin for displaying arbitrary notes",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KasparBP/Chart.Comments.js.git"
+    "url": "git+https://github.com/KasparBP/Chart.Notes.js.git"
   },
   "author": "Kaspar Bach Pedersen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/KasparBP/Chart.Comments.js/issues"
+    "url": "https://github.com/KasparBP/Chart.Notes.js/issues"
   },
-  "homepage": "https://github.com/KasparBP/Chart.Comments.js#readme",
+  "homepage": "https://github.com/KasparBP/Chart.Notes.js#readme",
   "dependencies": {
     "chart.js": "^2.2.2"
   },
