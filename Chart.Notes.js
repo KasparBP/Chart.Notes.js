@@ -3,7 +3,6 @@
 },{}],2:[function(require,module,exports){
 var Chart = require("chart.js");
 Chart = typeof(Chart) === "function" ? Chart : window.Chart;
-
 var helpers = Chart.helpers;
 
 Chart.Notes = Chart.Notes || {};
@@ -15,19 +14,47 @@ var defaultOptions = Chart.Notes.defaults = {
     fontColor: "#333333", 
 };
 
+var Note = function(originElement, text) {
+    this.originElement = originElement;
+    this.text = text;
+    return this;
+};
+Note.prototype.resetPosition = function () {
+    this.position = null;
+};
+Note.prototype.updatePosition = function () {
+    // TODO
+    this.position = null;
+};
+
 var NotesPlugin = Chart.PluginBase.extend({
-    beforeInit: function(chartInstance) { 
+    beforeInit: function(chartInstance) {
         var options = chartInstance.options;
         options.notes = helpers.configMerge(options.notes, Chart.Notes.defaults);
+        this._notes = [];
     },
     afterInit: function(chartInstance) { },
-    resize: function(chartInstance, newChartSize) { },
+    resize: function(chartInstance, newChartSize) {
+        helpers.each(this._notes, function(note) {
+            note.resetPosition();
+        }, this);
+    },
+
     beforeUpdate: function(chartInstance) { },
     afterScaleUpdate: function(chartInstance) { },
 
     beforeDatasetsUpdate: function(chartInstance) { },
-    afterDatasetsUpdate: function(chartInstance) { 
-        // Save notes here?
+    afterDatasetsUpdate: function(chartInstance) {
+        this._notes = [];
+        helpers.each(chartInstance.data.datasets, function(dataset, datasetIndex) {
+            var notes = dataset.notes || [];
+            for (var i = 0; i < notes.length; ++i) {
+                var meta = chartInstance.getDatasetMeta(datasetIndex);
+				var originElement = meta.data[notes[i].offset];
+                this._notes.push(
+                    new Note(originElement, notes[i].text));
+            }
+        }, this);
     },
     afterUpdate: function(chartInstance) { },
 
@@ -50,28 +77,27 @@ var NotesPlugin = Chart.PluginBase.extend({
         ctx.lineWidth = 2;
         ctx.strokeStyle = opts.borderColor;
 
+        //console.log(chartInstance.chartArea);
+        //console.log(this._notes);
+        
+        ctx.beginPath();
+        ctx.moveTo(chartInstance.chartArea.left, chartInstance.chartArea.top);
+        ctx.lineTo(chartInstance.chartArea.right, chartInstance.chartArea.bottom);
+        ctx.moveTo(chartInstance.chartArea.right, chartInstance.chartArea.top);
+        ctx.lineTo(chartInstance.chartArea.left, chartInstance.chartArea.bottom);
+        ctx.stroke();
+
         function drawNoteAt(x, y) {
             ctx.beginPath();
-            
             ctx.moveTo(x - 10, y - 10);
             ctx.lineTo(x + 10, y + 10);
-
             ctx.moveTo(x + 10, y - 10);
             ctx.lineTo(x - 10, y + 10);
-
             ctx.stroke();
         }
-
-        helpers.each(chartInstance.data.datasets, function(dataset, datasetIndex) {
-            var notes = dataset.notes || [];
-            for (var i = 0; i < notes.length; ++i) {
-                var text = notes[i].text;
-                var meta = chartInstance.getDatasetMeta(datasetIndex);
-				var noteOriginElement = meta.data[notes[i].offset];
-                // The tooltip position is where we want the notes to originate from. 
-                var location = noteOriginElement.tooltipPosition();
-                drawNoteAt(location.x, location.y);
-            }
+        helpers.each(this._notes, function (note) {
+            var location = note.originElement.tooltipPosition();
+            drawNoteAt(location.x, location.y);
         }, this);
     },
 
