@@ -14,27 +14,44 @@ var defaultOptions = Chart.Notes.defaults = {
 var Note = function(originElement, text) {
     this.originElement = originElement;
     this.text = text;
-    return this;
 };
-Note.prototype.resetPosition = function () {
-    this.position = null;
+var NoteList = function() {
+    this._notes = [];
+    this._positioned = false;
 };
-Note.prototype.updatePosition = function () {
-    // TODO
-    this.position = null;
+NoteList.prototype = {
+    addNote: function (note) {
+        this._notes.push(note);
+    },
+    getNote: function (index) {
+        return this._notes[index];
+    },
+    length: function () {
+        return this._notes.length;
+    },
+    resetLayout: function () {
+        this._positioned = false;
+    },
+    updateLayout: function(chartInstance) {
+        if (!this._positioned) {
+            //
+        }
+        return this.position;
+    }
 };
 
 var NotesPlugin = Chart.PluginBase.extend({
     beforeInit: function(chartInstance) {
         var options = chartInstance.options;
         options.notes = helpers.configMerge(options.notes, Chart.Notes.defaults);
-        this._notes = [];
     },
     afterInit: function(chartInstance) { },
     resize: function(chartInstance, newChartSize) {
-        helpers.each(this._notes, function(note) {
-            note.resetPosition();
-        }, this);
+        // Unfortunately chartInstance.chartArea is not updated at this point
+        // so just reset position and recalculate later
+        if (this._noteList) {
+            this._noteList.resetLayout();
+        }
     },
 
     beforeUpdate: function(chartInstance) { },
@@ -42,13 +59,13 @@ var NotesPlugin = Chart.PluginBase.extend({
 
     beforeDatasetsUpdate: function(chartInstance) { },
     afterDatasetsUpdate: function(chartInstance) {
-        this._notes = [];
+        this._noteList = new NoteList();
         helpers.each(chartInstance.data.datasets, function(dataset, datasetIndex) {
             var notes = dataset.notes || [];
             for (var i = 0; i < notes.length; ++i) {
                 var meta = chartInstance.getDatasetMeta(datasetIndex);
 				var originElement = meta.data[notes[i].offset];
-                this._notes.push(
+                this._noteList.addNote(
                     new Note(originElement, notes[i].text));
             }
         }, this);
@@ -66,16 +83,15 @@ var NotesPlugin = Chart.PluginBase.extend({
     // Before the datasets are drawn but after scales are drawn
     beforeDatasetsDraw: function(chartInstance, easing) { },
     afterDatasetsDraw: function(chartInstance, easing) {
-        var ctx = chartInstance.chart.ctx;
-        var notes = chartInstance.data.notes || [];
-        var opts = chartInstance.options.notes;
-
+        var ctx = chartInstance.chart.ctx,
+            notes = chartInstance.data.notes || [],
+            opts = chartInstance.options.notes;
+        this._noteList.updateLayout(chartInstance);
         // Canvas setup
         ctx.lineWidth = 2;
         ctx.strokeStyle = opts.borderColor;
 
         //console.log(chartInstance.chartArea);
-        //console.log(this._notes);
         
         ctx.beginPath();
         ctx.moveTo(chartInstance.chartArea.left, chartInstance.chartArea.top);
@@ -92,10 +108,11 @@ var NotesPlugin = Chart.PluginBase.extend({
             ctx.lineTo(x - 10, y + 10);
             ctx.stroke();
         }
-        helpers.each(this._notes, function (note) {
+        for (var i=0; i<this._noteList.length(); ++i) {
+            var note = this._noteList.getNote(i);
             var location = note.originElement.tooltipPosition();
             drawNoteAt(location.x, location.y);
-        }, this);
+        };
     },
 
     destroy: function(chartInstance) { }
