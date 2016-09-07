@@ -82,8 +82,9 @@ Note.prototype = {
     draw: function (chartInstance, ctx) {
         var originPosition = this.originElement.tooltipPosition(),
             opts = chartInstance.options.notes,
-            oldDash = ctx.getLineDash();
-    
+            oldDash = ctx.getLineDash(),
+            oldFill = ctx.fillStyle;
+
         ctx.setLineDash([2, 2]);
         ctx.beginPath();
 		ctx.moveTo(originPosition.x, originPosition.y);
@@ -91,12 +92,14 @@ Note.prototype = {
         ctx.closePath();
         ctx.stroke();
         ctx.setLineDash(oldDash);
+
         helpers.drawRoundedRectangle(ctx, this.position.x, this.position.y, 
             this.minSize().width, this.minSize().height, 2);
         ctx.fill();
         ctx.stroke();
-        ctx.strokeStyle = opts.fontColor;
-        ctx.strokeText(this.text, this.position.x + 3, this.position.y + 3);
+        ctx.fillStyle = opts.fontColor;
+        ctx.fillText(this.text, this.position.x + 3, this.position.y + 3);
+        ctx.fillStyle = oldFill;
     }
 };
 
