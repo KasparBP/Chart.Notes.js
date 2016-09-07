@@ -9,15 +9,97 @@ Chart.Notes = Chart.Notes || {};
 
 // Default options if none are provided
 var defaultOptions = Chart.Notes.defaults = {
-    backgroundColor: "rgba(166,85,15,0.2)",
-    borderColor: "#333333",
-    fontColor: "#333333", 
+    backgroundColor: "rgba(180,180,180,0.5)",
+    borderColor: "rgba(60,60,60,1)",
+    fontColor: "#000000", 
 };
 
 var Note = function(originElement, text) {
     this.originElement = originElement;
     this.text = text;
 };
+Note.prototype = {
+    minSize: function() {
+        // TODO Hardcoded for now
+        return {
+            width: 120,
+            height: 20
+        }
+    },
+    reposition: function(chartArea) {
+        // Do not count gutters
+        var originPosition = this.originElement.tooltipPosition(),
+            x = originPosition.x - chartArea.left,
+            y = originPosition.y - chartArea.top,
+            chartWidth = chartArea.right - chartArea.left,
+            chartHeight = chartArea.bottom - chartArea.top,
+            halfChartWidth = chartWidth/2,
+            halfChartHeight = chartHeight/2,
+            distance = 8,
+            finalPosition;
+        /*
+          ------------------------
+          | Q1       | Q2        |
+          ------------------------
+          | Q3       | Q4        |
+          ------------------------
+         */
+
+        if (x <= halfChartWidth && y <= halfChartHeight) {
+           // Q1
+           finalPosition = {
+               x: originPosition.x + distance,
+               y: (originPosition.y - this.minSize().height) - distance
+           } 
+        } else if (x > halfChartWidth && y <= halfChartHeight) {
+            // Q2
+            finalPosition = {
+               x: (originPosition.x - this.minSize().width) - distance,
+               y: (originPosition.y - this.minSize().height) - distance
+           } 
+        } else if (x <= halfChartWidth && y > halfChartHeight) {
+            // Q3
+            finalPosition = {
+               x: originPosition.x + distance,
+               y: (originPosition.y - this.minSize().height) - distance
+           }
+        } else {
+            // Q4
+            finalPosition = {
+               x: (originPosition.x - this.minSize().width) - distance,
+               y: (originPosition.y - this.minSize().height) - distance
+           }
+        }
+        if (finalPosition.x < chartArea.left) {
+            finalPosition.x = chartArea.left;
+        }
+        if (finalPosition.y < chartArea.top) {
+            finalPosition.x = chartArea.top;
+        }
+        
+        this.position = finalPosition;
+    },
+    draw: function (chartInstance, ctx) {
+        var originPosition = this.originElement.tooltipPosition(),
+            opts = chartInstance.options.notes,
+            oldDash = ctx.getLineDash();
+    
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+		ctx.moveTo(originPosition.x, originPosition.y);
+        ctx.lineTo(this.position.x, this.position.y + this.minSize().height);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash(oldDash);
+        helpers.drawRoundedRectangle(ctx, this.position.x, this.position.y, 
+            this.minSize().width, this.minSize().height, 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = opts.fontColor;
+        ctx.strokeText(this.text, this.position.x + 3, this.position.y + 3);
+    }
+};
+
 var NoteList = function() {
     this._notes = [];
     this._positioned = false;
@@ -37,9 +119,16 @@ NoteList.prototype = {
     },
     updateLayout: function(chartInstance) {
         if (!this._positioned) {
-            //
+            for (var i=0; i<this._notes.length; ++i) {
+                this._notes[i].reposition(chartInstance.chartArea);
+            }
+            this._positioned = true;
         }
-        return this.position;
+    },
+    draw: function(chartInstance, ctx) {
+        for (var i=0; i<this._notes.length; ++i) {
+            this._notes[i].draw(chartInstance, ctx);
+        }
     }
 };
 
@@ -90,32 +179,17 @@ var NotesPlugin = Chart.PluginBase.extend({
             notes = chartInstance.data.notes || [],
             opts = chartInstance.options.notes;
         this._noteList.updateLayout(chartInstance);
+        if (easing != this._easing) {
+            // Make sure we reset layout when we are done "easing".
+            this._noteList.resetLayout();
+            this._easing = easing;
+        }
         // Canvas setup
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = opts.backgroundColor;
         ctx.strokeStyle = opts.borderColor;
 
-        //console.log(chartInstance.chartArea);
-        
-        ctx.beginPath();
-        ctx.moveTo(chartInstance.chartArea.left, chartInstance.chartArea.top);
-        ctx.lineTo(chartInstance.chartArea.right, chartInstance.chartArea.bottom);
-        ctx.moveTo(chartInstance.chartArea.right, chartInstance.chartArea.top);
-        ctx.lineTo(chartInstance.chartArea.left, chartInstance.chartArea.bottom);
-        ctx.stroke();
-
-        function drawNoteAt(x, y) {
-            ctx.beginPath();
-            ctx.moveTo(x - 10, y - 10);
-            ctx.lineTo(x + 10, y + 10);
-            ctx.moveTo(x + 10, y - 10);
-            ctx.lineTo(x - 10, y + 10);
-            ctx.stroke();
-        }
-        for (var i=0; i<this._noteList.length(); ++i) {
-            var note = this._noteList.getNote(i);
-            var location = note.originElement.tooltipPosition();
-            drawNoteAt(location.x, location.y);
-        };
+        this._noteList.draw(chartInstance, ctx);
     },
 
     destroy: function(chartInstance) { }
