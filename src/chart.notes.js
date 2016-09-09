@@ -97,6 +97,19 @@ Note.prototype = {
         ctx.fillStyle = opts.fontColor;
         ctx.fillText(this.text, this.position.x + 3, this.position.y + 3);
         ctx.fillStyle = oldFill;
+    },
+    hit: function(position) {
+        var left = this.position.x,
+            top = this.position.y,
+            right = this.position.x + this.minSize().width,
+            bottom = this.position.y + this.minSize().height;
+        if (left <= position.x &&
+            top <= position.y &&
+            right >= position.x &&
+            bottom >= position.y) {
+            return true;
+        }
+        return false;
     }
 };
 
@@ -129,13 +142,56 @@ NoteList.prototype = {
         for (var i=0; i<this._notes.length; ++i) {
             this._notes[i].draw(chartInstance, ctx);
         }
+    },
+    didHitNote: function(position) {
+        for (var i=0; i<this._notes.length; ++i) {
+            var note = this._notes[i];
+            if (note.hit(position)) {
+                return note;
+            }
+        }
+        return null;
     }
 };
+var findNotesPlugin = function () {
+    // Fish out refence to our plugin itself
+    // This feels dirty..
+    var plugins = Chart.plugins.getAll(); 
+    for (var i=0; i<plugins.length; ++i) {
+        if (plugins[i] instanceof NotesPlugin) {
+            return plugins[i];
+        }
+    }
+    return null;
+}
 
 var NotesPlugin = Chart.PluginBase.extend({
+
+    onClick: function(event, active) {
+        // !!!! 'this' is pointing to the chart controller.
+        var me = findNotesPlugin(),
+            hitNote;
+        if (me) {
+            if (me._noteList) {
+                var pos = helpers.getRelativePosition(event, this.chart);
+                hitNote = me._noteList.didHitNote(pos);
+                if (hitNote) {
+                    // TODO
+                }
+            }
+            if (!hitNote && me._chartOptsOnClick) {
+                me._chartOptsOnClick.call(this, event, active);
+            }
+        }
+    },
     beforeInit: function(chartInstance) {
         var options = chartInstance.options;
         options.notes = helpers.configMerge(options.notes, Chart.Notes.defaults);
+        
+        // Chart.JS only support one onClick handler, so save the user configured handler 
+        // override it and call it from our own handler instead.
+        this._chartOptsOnClick = options.onClick;
+        options.onClick = this.onClick;
     },
     afterInit: function(chartInstance) { },
     resize: function(chartInstance, newChartSize) {
