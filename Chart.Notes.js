@@ -9,22 +9,32 @@ Chart.Notes = Chart.Notes || {};
 
 // Default options if none are provided
 var defaultOptions = Chart.Notes.defaults = {
-    backgroundColor: "rgba(180,180,180,0.5)",
-    borderColor: "rgba(60,60,60,1)",
-    fontColor: "#000000", 
+    backgroundColor: "rgba(0,0,0,0.8)",
+    borderColor: "rgba(0,0,0,0.8)",
+    fontColor: "#fff", 
+    fontStyle: "bold",
+    fontSize: 12,
+    fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+    fontSpacing: 2,
+    maxWidth: 180,
+    minWidth: 80
 };
 
 var Note = function(originElement, text) {
     this.originElement = originElement;
     this.text = text;
+    this.size = {width: 120, height: 20};
+    this.position = {x: 0, y: 0};
 };
 Note.prototype = {
-    minSize: function() {
-        // TODO Hardcoded for now
-        return {
-            width: 120,
-            height: 20
-        }
+    _setFont: function (chartInstance, ctx) {
+        var opts = chartInstance.options.notes;
+        ctx.font = helpers.fontString(opts.fontSize, opts.fontStyle, opts.fontFamily);
+    },
+    resize: function (chartInstance, ctx) {
+        this._setFont(chartInstance, ctx);
+        var measuredSize = ctx.measureText(this.text);
+        console.log(measuredSize);
     },
     reposition: function(chartArea) {
         // Do not count gutters
@@ -37,46 +47,34 @@ Note.prototype = {
             halfChartHeight = chartHeight/2,
             distance = 8,
             finalPosition;
-        /*
-          ------------------------
+        /*------------------------
           | Q1       | Q2        |
           ------------------------
           | Q3       | Q4        |
-          ------------------------
-         */
-
-        if (x <= halfChartWidth && y <= halfChartHeight) {
-           // Q1
+          ------------------------ */
+        if (x <= halfChartWidth && y <= halfChartHeight) { // Q1
            finalPosition = {
                x: originPosition.x + distance,
-               y: (originPosition.y - this.minSize().height) - distance
-           } 
-        } else if (x > halfChartWidth && y <= halfChartHeight) {
-            // Q2
+               y: (originPosition.y - this.size.height) - distance
+           };
+        } else if (x > halfChartWidth && y <= halfChartHeight) { // Q2
             finalPosition = {
-               x: (originPosition.x - this.minSize().width) - distance,
-               y: (originPosition.y - this.minSize().height) - distance
-           } 
-        } else if (x <= halfChartWidth && y > halfChartHeight) {
-            // Q3
+               x: (originPosition.x - this.size.width) - distance,
+               y: (originPosition.y - this.size.height) - distance
+           };
+        } else if (x <= halfChartWidth && y > halfChartHeight) { // Q3
             finalPosition = {
                x: originPosition.x + distance,
-               y: (originPosition.y - this.minSize().height) - distance
-           }
-        } else {
-            // Q4
+               y: (originPosition.y - this.size.height) - distance
+           };
+        } else { // Q4
             finalPosition = {
-               x: (originPosition.x - this.minSize().width) - distance,
-               y: (originPosition.y - this.minSize().height) - distance
-           }
+               x: (originPosition.x - this.size.width) - distance,
+               y: (originPosition.y - this.size.height) - distance
+           };
         }
-        if (finalPosition.x < chartArea.left) {
-            finalPosition.x = chartArea.left;
-        }
-        if (finalPosition.y < chartArea.top) {
-            finalPosition.x = chartArea.top;
-        }
-        
+        finalPosition.x = Math.max(finalPosition.x, chartArea.left);
+        finalPosition.y = Math.max(finalPosition.y, chartArea.top);
         this.position = finalPosition;
     },
     draw: function (chartInstance, ctx) {
@@ -88,15 +86,16 @@ Note.prototype = {
         ctx.setLineDash([2, 2]);
         ctx.beginPath();
 		ctx.moveTo(originPosition.x, originPosition.y);
-        ctx.lineTo(this.position.x, this.position.y + this.minSize().height);
+        ctx.lineTo(this.position.x, this.position.y + this.size.height);
         ctx.closePath();
         ctx.stroke();
         ctx.setLineDash(oldDash);
 
         helpers.drawRoundedRectangle(ctx, this.position.x, this.position.y, 
-            this.minSize().width, this.minSize().height, 2);
+            this.size.width, this.size.height, 3);
         ctx.fill();
         ctx.stroke();
+        this._setFont(chartInstance, ctx);
         ctx.fillStyle = opts.fontColor;
         ctx.fillText(this.text, this.position.x + 3, this.position.y + 3);
         ctx.fillStyle = oldFill;
@@ -104,8 +103,8 @@ Note.prototype = {
     hit: function(position) {
         var left = this.position.x,
             top = this.position.y,
-            right = this.position.x + this.minSize().width,
-            bottom = this.position.y + this.minSize().height;
+            right = this.position.x + this.size.width,
+            bottom = this.position.y + this.size.height;
         if (left <= position.x &&
             top <= position.y &&
             right >= position.x &&
@@ -133,10 +132,12 @@ NoteList.prototype = {
     resetLayout: function () {
         this._positioned = false;
     },
-    updateLayout: function(chartInstance) {
+    updateLayout: function(chartInstance, ctx) {
         if (!this._positioned) {
-            for (var i=0; i<this._notes.length; ++i) {
-                this._notes[i].reposition(chartInstance.chartArea);
+            for (var i=0, l=this._notes.length; i<l; ++i) {
+                var note = this._notes[i];
+                note.resize(chartInstance, ctx);
+                note.reposition(chartInstance.chartArea);
             }
             this._positioned = true;
         }
@@ -166,7 +167,7 @@ var findNotesPlugin = function () {
         }
     }
     return null;
-}
+};
 
 var NotesPlugin = Chart.PluginBase.extend({
 
@@ -237,12 +238,12 @@ var NotesPlugin = Chart.PluginBase.extend({
         var ctx = chartInstance.chart.ctx,
             notes = chartInstance.data.notes || [],
             opts = chartInstance.options.notes;
-        this._noteList.updateLayout(chartInstance);
         if (easing != this._easing) {
             // Make sure we reset layout when we are done "easing".
             this._noteList.resetLayout();
             this._easing = easing;
         }
+        this._noteList.updateLayout(chartInstance, ctx);
         // Canvas setup
         ctx.lineWidth = 1;
         ctx.fillStyle = opts.backgroundColor;
