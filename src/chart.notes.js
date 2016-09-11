@@ -9,10 +9,10 @@ var defaultOptions = Chart.Notes.defaults = {
     backgroundColor: "rgba(0,0,0,0.8)",
     borderColor: "rgba(0,0,0,0.8)",
     fontColor: "#fff", 
-    fontStyle: "bold",
-    fontSize: 12,
+    fontStyle: "normal",
+    fontSize: 13,
     fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-    fontSpacing: 2,
+    fontSpacing: 5,
     maxWidth: 180,
     minWidth: 80
 };
@@ -22,19 +22,33 @@ var Note = function(originElement, text) {
     this.text = text;
     this.size = {width: 120, height: 20};
     this.position = {x: 0, y: 0};
+    this._textShorted = text;
 };
 Note.prototype = {
-    _setFont: function (chartInstance, ctx) {
-        var opts = chartInstance.options.notes;
+    _setFont: function (opts, ctx) {
         ctx.font = helpers.fontString(opts.fontSize, opts.fontStyle, opts.fontFamily);
     },
     resize: function (chartInstance, ctx) {
-        this._setFont(chartInstance, ctx);
-        var measuredSize = ctx.measureText(this.text);
-        console.log(measuredSize);
+        var opts = chartInstance.options.notes,
+            gutter = 2 * opts.fontSpacing,
+            width;
+        this._setFont(opts, ctx);
+        this._textShorted = this.text;
+        width = ctx.measureText(this.text).width + gutter;
+        while (width > opts.maxWidth) {
+            var diff = width - opts.maxWidth,
+                estimatedCharWidth = opts.fontSize / 2,
+                newLen = this._textShorted.length - Math.ceil(diff / estimatedCharWidth + 3);
+            this._textShorted = this._textShorted.substring(0, 
+                Math.max(1, newLen)) + "...";
+            width = ctx.measureText(this._textShorted).width + gutter;
+        }
+        this.size = {
+            height: opts.fontSize + gutter,
+            width: width
+        };
     },
     reposition: function(chartArea) {
-        // Do not count gutters
         var originPosition = this.originElement.tooltipPosition(),
             x = originPosition.x - chartArea.left,
             y = originPosition.y - chartArea.top,
@@ -94,7 +108,8 @@ Note.prototype = {
         ctx.stroke();
         this._setFont(chartInstance, ctx);
         ctx.fillStyle = opts.fontColor;
-        ctx.fillText(this.text, this.position.x + 3, this.position.y + 3);
+        ctx.fillText(this._textShorted, this.position.x + opts.fontSpacing, 
+            this.position.y + opts.fontSpacing);
         ctx.fillStyle = oldFill;
     },
     hit: function(position) {
