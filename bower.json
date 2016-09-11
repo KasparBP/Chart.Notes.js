@@ -1,0 +1,20 @@
+{
+  "name": "chart.notes.js",
+  "description": "Chart.JS Plugin for displaying arbitrary notes",
+  "main": "Chart.Notes.js",
+  "authors": [
+    "Kaspar Bach Pedersen"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "chartjs", "notes", "chart"
+  ],
+  "homepage": "https://github.com/KasparBP/Chart.Notes.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
