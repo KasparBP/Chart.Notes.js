@@ -47,9 +47,11 @@
             }]
         },
         options: {
-            notes: [
-                {offset: 1, text: "option_plappe"}, {offset: 5, text: "option_pluppe"}
-            ],
+            notes: {
+                onClick: function (event, note) {
+                    console.log("Note clicked: " + note.text);
+                }
+            },
             responsive: true,
             title:{
                 display: true,

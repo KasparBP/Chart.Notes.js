@@ -14,7 +14,7 @@ var defaultOptions = Chart.Notes.defaults = {
     fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
     fontSpacing: 5,
     maxWidth: 180,
-    minWidth: 80
+    minWidth: 60
 };
 
 var Note = function(originElement, text) {
@@ -45,7 +45,7 @@ Note.prototype = {
         }
         this.size = {
             height: opts.fontSize + gutter,
-            width: width
+            width: Math.max(width, opts.minWidth)
         };
     },
     reposition: function(chartArea) {
@@ -186,13 +186,15 @@ var NotesPlugin = Chart.PluginBase.extend({
     onClick: function(event, active) {
         // !!!! 'this' is pointing to the chart controller.
         var me = findNotesPlugin(),
+            chartInstance = this,
             hitNote;
         if (me) {
             if (me._noteList) {
-                var pos = helpers.getRelativePosition(event, this.chart);
+                var options = chartInstance.options.notes,
+                    pos = helpers.getRelativePosition(event, chartInstance.chart);
                 hitNote = me._noteList.didHitNote(pos);
-                if (hitNote) {
-                    // TODO
+                if (hitNote && options && options.onClick) {
+                    options.onClick.call(this, event, hitNote);
                 }
             }
             if (!hitNote && me._chartOptsOnClick) {
