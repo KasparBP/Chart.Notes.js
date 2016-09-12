@@ -170,24 +170,25 @@ NoteList.prototype = {
     }
 };
 
+var NotesOnClick = function(event, active) {
+    // !!!! 'this' is pointing to the chart controller.
+    var chartInstance = this,
+        hitNote;
+    if (chartInstance._noteList) {
+        var options = chartInstance.options.notes,
+            pos = helpers.getRelativePosition(event, chartInstance.chart);
+        hitNote = chartInstance._noteList.didHitNote(pos);
+        if (hitNote && options && options.onClick) {
+            options.onClick.call(this, event, hitNote);
+        }
+    }
+    if (!hitNote && chartInstance._notesOriginalOnClick) {
+        chartInstance._notesOriginalOnClick.call(this, event, active);
+    }
+};
+
 var NotesPlugin = Chart.PluginBase.extend({
 
-    onClick: function(event, active) {
-        // !!!! 'this' is pointing to the chart controller.
-        var chartInstance = this,
-            hitNote;
-        if (chartInstance._noteList) {
-            var options = chartInstance.options.notes,
-                pos = helpers.getRelativePosition(event, chartInstance.chart);
-            hitNote = chartInstance._noteList.didHitNote(pos);
-            if (hitNote && options && options.onClick) {
-                options.onClick.call(this, event, hitNote);
-            }
-        }
-        if (!hitNote && chartInstance._notesOriginalOnClick) {
-            chartInstance._notesOriginalOnClick.call(this, event, active);
-        }
-    },
     beforeInit: function(chartInstance) {
         var options = chartInstance.options;
         options.notes = helpers.configMerge(options.notes, Chart.Notes.defaults);
@@ -195,7 +196,7 @@ var NotesPlugin = Chart.PluginBase.extend({
         // Chart.JS only support one onClick handler, so save the user configured handler 
         // override it and call it from our own handler instead.
         chartInstance._notesOriginalOnClick = options.onClick;
-        options.onClick = this.onClick;
+        options.onClick = NotesOnClick;
     },
     afterInit: function(chartInstance) { },
     resize: function(chartInstance, newChartSize) {
