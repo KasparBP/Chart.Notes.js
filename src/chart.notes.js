@@ -197,8 +197,8 @@ var NotesPlugin = Chart.PluginBase.extend({
                     options.onClick.call(this, event, hitNote);
                 }
             }
-            if (!hitNote && me._chartOptsOnClick) {
-                me._chartOptsOnClick.call(this, event, active);
+            if (!hitNote && me._notesOriginalOnClick) {
+                me._notesOriginalOnClick.call(this, event, active);
             }
         }
     },
@@ -208,15 +208,15 @@ var NotesPlugin = Chart.PluginBase.extend({
         
         // Chart.JS only support one onClick handler, so save the user configured handler 
         // override it and call it from our own handler instead.
-        this._chartOptsOnClick = options.onClick;
-        options.onClick = this.onClick;
+        chartInstance._notesOriginalOnClick = options.onClick;
+        options.onClick = chartInstance.onClick;
     },
     afterInit: function(chartInstance) { },
     resize: function(chartInstance, newChartSize) {
         // Unfortunately chartInstance.chartArea is not updated at this point
         // so just reset position and recalculate later
-        if (this._noteList) {
-            this._noteList.resetLayout();
+        if (chartInstance._noteList) {
+            chartInstance._noteList.resetLayout();
         }
     },
 
@@ -225,13 +225,13 @@ var NotesPlugin = Chart.PluginBase.extend({
 
     beforeDatasetsUpdate: function(chartInstance) { },
     afterDatasetsUpdate: function(chartInstance) {
-        this._noteList = new NoteList();
+        chartInstance._noteList = new NoteList();
         helpers.each(chartInstance.data.datasets, function(dataset, datasetIndex) {
             var notes = dataset.notes || [];
             for (var i = 0; i < notes.length; ++i) {
                 var meta = chartInstance.getDatasetMeta(datasetIndex);
 				var originElement = meta.data[notes[i].offset];
-                this._noteList.addNote(
+                chartInstance._noteList.addNote(
                     new Note(originElement, notes[i].text));
             }
         }, this);
@@ -251,19 +251,20 @@ var NotesPlugin = Chart.PluginBase.extend({
     afterDatasetsDraw: function(chartInstance, easing) {
         var ctx = chartInstance.chart.ctx,
             notes = chartInstance.data.notes || [],
-            opts = chartInstance.options.notes;
-        if (easing != this._easing) {
+            opts = chartInstance.options.notes,
+            noteList = chartInstance._noteList;
+        if (easing != chartInstance._notesEasing) {
             // Make sure we reset layout when we are done "easing".
-            this._noteList.resetLayout();
-            this._easing = easing;
+            noteList.resetLayout();
+            chartInstance._notesEasing = easing;
         }
-        this._noteList.updateLayout(chartInstance, ctx);
+        noteList.updateLayout(chartInstance, ctx);
         // Canvas setup
         ctx.lineWidth = 1;
         ctx.fillStyle = opts.backgroundColor;
         ctx.strokeStyle = opts.borderColor;
 
-        this._noteList.draw(chartInstance, ctx);
+        noteList.draw(chartInstance, ctx);
     },
 
     destroy: function(chartInstance) { }
