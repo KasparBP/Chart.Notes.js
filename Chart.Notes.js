@@ -172,37 +172,23 @@ NoteList.prototype = {
         return null;
     }
 };
-var findNotesPlugin = function () {
-    // Fish out refence to our plugin itself
-    // This feels dirty..
-    var plugins = Chart.plugins.getAll(); 
-    for (var i=0; i<plugins.length; ++i) {
-        if (plugins[i] instanceof NotesPlugin) {
-            return plugins[i];
-        }
-    }
-    return null;
-};
 
 var NotesPlugin = Chart.PluginBase.extend({
 
     onClick: function(event, active) {
         // !!!! 'this' is pointing to the chart controller.
-        var me = findNotesPlugin(),
-            chartInstance = this,
+        var chartInstance = this,
             hitNote;
-        if (me) {
-            if (me._noteList) {
-                var options = chartInstance.options.notes,
-                    pos = helpers.getRelativePosition(event, chartInstance.chart);
-                hitNote = me._noteList.didHitNote(pos);
-                if (hitNote && options && options.onClick) {
-                    options.onClick.call(this, event, hitNote);
-                }
+        if (chartInstance._noteList) {
+            var options = chartInstance.options.notes,
+                pos = helpers.getRelativePosition(event, chartInstance.chart);
+            hitNote = chartInstance._noteList.didHitNote(pos);
+            if (hitNote && options && options.onClick) {
+                options.onClick.call(this, event, hitNote);
             }
-            if (!hitNote && me._notesOriginalOnClick) {
-                me._notesOriginalOnClick.call(this, event, active);
-            }
+        }
+        if (!hitNote && chartInstance._notesOriginalOnClick) {
+            chartInstance._notesOriginalOnClick.call(this, event, active);
         }
     },
     beforeInit: function(chartInstance) {
@@ -212,7 +198,7 @@ var NotesPlugin = Chart.PluginBase.extend({
         // Chart.JS only support one onClick handler, so save the user configured handler 
         // override it and call it from our own handler instead.
         chartInstance._notesOriginalOnClick = options.onClick;
-        options.onClick = chartInstance.onClick;
+        options.onClick = this.onClick;
     },
     afterInit: function(chartInstance) { },
     resize: function(chartInstance, newChartSize) {
