@@ -17,12 +17,13 @@ var defaultOptions = Chart.Notes.defaults = {
     minWidth: 60
 };
 
-var Note = function(originElement, text) {
+var Note = function(originElement, text, extra) {
     this.originElement = originElement;
     this.text = text;
     this.size = {width: 120, height: 20};
     this.position = {x: 0, y: 0};
     this._textShorted = text;
+    this.extra = extra
 };
 Note.prototype = {
     _setFont: function (opts, ctx) {
@@ -219,7 +220,7 @@ var NotesPlugin = Chart.PluginBase.extend({
                 var meta = chartInstance.getDatasetMeta(datasetIndex);
 				var originElement = meta.data[notes[i].offset];
                 chartInstance._noteList.addNote(
-                    new Note(originElement, notes[i].text));
+                    new Note(originElement, notes[i].text, notes[i].extra));
             }
         }, this);
     },
@@ -240,11 +241,7 @@ var NotesPlugin = Chart.PluginBase.extend({
             notes = chartInstance.data.notes || [],
             opts = chartInstance.options.notes,
             noteList = chartInstance._noteList;
-        if (easing != chartInstance._notesEasing) {
-            // Make sure we reset layout when we are done "easing".
-            noteList.resetLayout();
-            chartInstance._notesEasing = easing;
-        }
+        noteList.resetLayout();
         noteList.updateLayout(chartInstance, ctx);
         // Canvas setup
         ctx.lineWidth = 1;
