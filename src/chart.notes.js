@@ -23,7 +23,7 @@ var Note = function(originElement, text, extra) {
     this.size = {width: 120, height: 20};
     this.position = {x: 0, y: 0};
     this._textShorted = text;
-    this.extra = extra
+    this.extra = extra;
 };
 Note.prototype = {
     _setFont: function (opts, ctx) {
