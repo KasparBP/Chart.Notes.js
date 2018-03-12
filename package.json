@@ -1,6 +1,6 @@
 {
   "name": "chart.notes.js",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "Chart.JS Plugin for displaying arbitrary notes",
   "main": "index.js",
   "scripts": {

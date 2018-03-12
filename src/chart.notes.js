@@ -256,3 +256,4 @@ var NotesPlugin = Chart.PluginBase.extend({
 });
 module.exports = NotesPlugin;
 Chart.pluginService.register(new NotesPlugin());
+
