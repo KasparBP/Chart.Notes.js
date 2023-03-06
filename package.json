@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Chart.JS Plugin for displaying arbitrary notes",
   "type": "module",
+  "main": "build/chart.notes.js",
   "scripts": {
     "build": "rollup --config"
   },
