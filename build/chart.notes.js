@@ -1,26 +1,48 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+import { Chart } from 'chart.js';
+import * as helpers from 'chart.js/helpers';
 
-},{}],2:[function(require,module,exports){
-var Chart = require("chart.js");
-Chart = typeof(Chart) === "function" ? Chart : window.Chart;
-var helpers = Chart.helpers;
-
-Chart.Notes = Chart.Notes || {};
+// Chart.Notes = Chart.Notes || {};
 
 // Default options if none are provided
-var defaultOptions = Chart.Notes.defaults = {
-    backgroundColor: "rgba(0,0,0,0.8)",
-    borderColor: "rgba(0,0,0,0.8)",
-    fontColor: "#fff", 
-    fontStyle: "normal",
-    fontSize: 13,
-    fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-    fontSpacing: 5,
-    maxWidth: 180,
-    minWidth: 60
+// const defaultOptions = Chart.Notes.defaults = {
+//     backgroundColor: "rgba(0,0,0,0.8)",
+//     borderColor: "rgba(0,0,0,0.8)",
+//     fontColor: "#fff",
+//     fontStyle: "normal",
+//     fontSize: 13,
+//     fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+//     fontSpacing: 5,
+//     maxWidth: 180,
+//     minWidth: 60
+// };
+const drawRoundedRect = function (ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, height / 2, width / 2);
+    const left = x + r;
+    const top = y + r;
+    const right = x + width - r;
+    const bottom = y + height - r;
+    ctx.moveTo(x, top);
+    const halfPi = Math.PI / 2;
+    if (left < right && top < bottom) {
+        ctx.arc(left, top, r, -Math.PI, - halfPi);
+        ctx.arc(right, top, r, -halfPi, 0);
+        ctx.arc(right, bottom, r, 0, halfPi);
+        ctx.arc(left, bottom, r, halfPi, Math.PI);
+    } else if (left < right) {
+        ctx.moveTo(left, y);
+        ctx.arc(right, top, r, -halfPi, halfPi);
+        ctx.arc(left, top, r, halfPi, Math.PI + halfPi);
+    } else if (top < bottom) {
+        ctx.arc(left, top, r, -Math.PI, 0);
+        ctx.arc(left, bottom, r, 0, Math.PI);
+    } else {
+        ctx.arc(left, top, r, -Math.PI, Math.PI);
+    }
+    ctx.closePath();
+    ctx.moveTo(x, y);
 };
-
-var Note = function(originElement, text, extra) {
+const Note = function(originElement, text, extra) {
+    console.log("Note");
     this.originElement = originElement;
     this.text = text;
     this.size = {width: 120, height: 20};
@@ -33,14 +55,14 @@ Note.prototype = {
         ctx.font = helpers.fontString(opts.fontSize, opts.fontStyle, opts.fontFamily);
     },
     resize: function (chartInstance, ctx) {
-        var opts = chartInstance.options.notes,
+        let opts = chartInstance.options.plugins.notes,
             gutter = 2 * opts.fontSpacing,
             width;
         this._setFont(opts, ctx);
         this._textShorted = this.text;
         width = ctx.measureText(this.text).width + gutter;
         while (width > opts.maxWidth) {
-            var diff = width - opts.maxWidth,
+            const diff = width - opts.maxWidth,
                 estimatedCharWidth = opts.fontSize / 2,
                 newLen = this._textShorted.length - Math.ceil(diff / estimatedCharWidth + 3);
             this._textShorted = this._textShorted.substring(0, 
@@ -53,13 +75,13 @@ Note.prototype = {
         };
     },
     reposition: function(chartArea) {
-        var originPosition = this.originElement.tooltipPosition(),
+        let originPosition = this.originElement.tooltipPosition(),
             x = originPosition.x - chartArea.left,
             y = originPosition.y - chartArea.top,
             chartWidth = chartArea.right - chartArea.left,
             chartHeight = chartArea.bottom - chartArea.top,
-            halfChartWidth = chartWidth/2,
-            halfChartHeight = chartHeight/2,
+            halfChartWidth = chartWidth / 2,
+            halfChartHeight = chartHeight / 2,
             distance = 8,
             finalPosition;
         /*------------------------
@@ -93,8 +115,9 @@ Note.prototype = {
         this.position = finalPosition;
     },
     draw: function (chartInstance, ctx) {
-        var originPosition = this.originElement.tooltipPosition(),
-            opts = chartInstance.options.notes,
+        console.log("draw");
+        const originPosition = this.originElement.tooltipPosition(),
+            opts = chartInstance.options.plugins.notes,
             oldDash = ctx.getLineDash(),
             oldFill = ctx.fillStyle;
 
@@ -106,8 +129,7 @@ Note.prototype = {
         ctx.stroke();
         ctx.setLineDash(oldDash);
 
-        helpers.drawRoundedRectangle(ctx, this.position.x, this.position.y, 
-            this.size.width, this.size.height, 3);
+        drawRoundedRect(ctx, this.position.x, this.position.y, this.size.width, this.size.height, 3);
         ctx.fill();
         ctx.stroke();
         this._setFont(chartInstance, ctx);
@@ -117,21 +139,19 @@ Note.prototype = {
         ctx.fillStyle = oldFill;
     },
     hit: function(position) {
-        var left = this.position.x,
+        const left = this.position.x,
             top = this.position.y,
             right = this.position.x + this.size.width,
             bottom = this.position.y + this.size.height;
-        if (left <= position.x &&
+        return left <= position.x &&
             top <= position.y &&
             right >= position.x &&
-            bottom >= position.y) {
-            return true;
-        }
-        return false;
+            bottom >= position.y;
+
     }
 };
 
-var NoteList = function() {
+const NoteList = function () {
     this._notes = [];
     this._positioned = false;
 };
@@ -150,8 +170,8 @@ NoteList.prototype = {
     },
     updateLayout: function(chartInstance, ctx) {
         if (!this._positioned) {
-            for (var i=0, l=this._notes.length; i<l; ++i) {
-                var note = this._notes[i];
+            for (let i=0, l=this._notes.length; i<l; ++i) {
+                const note = this._notes[i];
                 note.resize(chartInstance, ctx);
                 note.reposition(chartInstance.chartArea);
             }
@@ -159,13 +179,13 @@ NoteList.prototype = {
         }
     },
     draw: function(chartInstance, ctx) {
-        for (var i=0; i<this._notes.length; ++i) {
+        for (let i=0; i<this._notes.length; ++i) {
             this._notes[i].draw(chartInstance, ctx);
         }
     },
     didHitNote: function(position) {
-        for (var i=0; i<this._notes.length; ++i) {
-            var note = this._notes[i];
+        for (let i=0; i<this._notes.length; ++i) {
+            const note = this._notes[i];
             if (note.hit(position)) {
                 return note;
             }
@@ -174,12 +194,13 @@ NoteList.prototype = {
     }
 };
 
-var NotesOnClick = function(event, active) {
+const NotesOnClick = function (event, active) {
+    console.log("NotesOnClick");
     // !!!! 'this' is pointing to the chart controller.
-    var chartInstance = this,
+    let chartInstance = this,
         hitNote;
     if (chartInstance._noteList) {
-        var options = chartInstance.options.notes,
+        const options = chartInstance.options.notes,
             pos = helpers.getRelativePosition(event, chartInstance.chart);
         hitNote = chartInstance._noteList.didHitNote(pos);
         if (hitNote && options && options.onClick) {
@@ -191,19 +212,40 @@ var NotesOnClick = function(event, active) {
     }
 };
 
-var NotesPlugin = Chart.PluginBase.extend({
-
-    beforeInit: function(chartInstance) {
-        var options = chartInstance.options;
-        options.notes = helpers.configMerge(options.notes, Chart.Notes.defaults);
+const notesPlugin = {
+    id: 'notes',
+    version: "0.1",
+    beforeRegister: () => {
+        console.log("beforeRegister");
+    },
+    afterRegister: () => {
+        console.log("afterRegister");
+    },
+    afterUnregister: () => {
+        console.log("afterUnregister");
+    },
+    afterDataLimits: (chart, args) => {
+        console.log("afterDataLimits");
+    },
+    beforeEvent: (chart, args, options) => {
+        console.log("beforeEvent");
+    },
+    beforeInit: (chartInstance) => {
+        console.log("beforeInit");
+        const options = chartInstance.options;
+        // options.notes = helpers.merge(options.notes, Chart.Notes.defaults);
         
         // Chart.JS only support one onClick handler, so save the user configured handler 
         // override it and call it from our own handler instead.
         chartInstance._notesOriginalOnClick = options.onClick;
         options.onClick = NotesOnClick;
     },
-    afterInit: function(chartInstance) { },
-    resize: function(chartInstance, newChartSize) {
+    afterInit: (chartInstance) => {
+        console.log("afterInit");
+    },
+
+    resize: (chartInstance, newChartSize) => {
+        console.log("resize");
         // Unfortunately chartInstance.chartArea is not updated at this point
         // so just reset position and recalculate later
         if (chartInstance._noteList) {
@@ -211,53 +253,86 @@ var NotesPlugin = Chart.PluginBase.extend({
         }
     },
 
-    beforeUpdate: function(chartInstance) { },
-    afterScaleUpdate: function(chartInstance) { },
-
-    beforeDatasetsUpdate: function(chartInstance) { },
-    afterDatasetsUpdate: function(chartInstance) {
+    beforeUpdate: (chart, args, options) => {
+        console.log("beforeUpdate");
+    },
+    afterScaleUpdate: (chartInstance) => {
+        console.log("afterScaleUpdate");
+    },
+    afterDatasetDraw: (chartInstance) => {
+        console.log("afterDatasetDraw");
+    },
+    beforeDatasetsUpdate: (chartInstance) => {
+        console.log("beforeDatasetsUpdate");
+    },
+    afterDatasetsUpdate: function (chartInstance) {
+        console.log("afterDatasetsUpdate");
         chartInstance._noteList = new NoteList();
         helpers.each(chartInstance.data.datasets, function(dataset, datasetIndex) {
-            var notes = dataset.notes || [];
-            for (var i = 0; i < notes.length; ++i) {
-                var meta = chartInstance.getDatasetMeta(datasetIndex);
-				var originElement = meta.data[notes[i].offset];
+            const notes = dataset.plugins.notes.notes || [];
+            for (let i = 0; i < notes.length; ++i) {
+                const meta = chartInstance.getDatasetMeta(datasetIndex);
+                const originElement = meta.data[notes[i].offset];
                 chartInstance._noteList.addNote(
                     new Note(originElement, notes[i].text, notes[i].extra));
             }
         }, this);
     },
-    afterUpdate: function(chartInstance) { },
+    afterUpdate: (chart, args, options) => {
+        console.log("afterUpdate");
+    },
 
     // This is called at the start of a render. It is only called once, even if the animation will run for a number of frames. Use beforeDraw or afterDraw
     // to do something on each animation frame
-    beforeRender: function(chartInstance) { },
+    beforeRender: (chartInstance) => {
+        console.log("beforeRender");
+    },
 
     // Easing is for animation
-    beforeDraw: function(chartInstance, easing) { },
-    afterDraw: function(chartInstance, easing) { },
+    beforeDraw: (chartInstance, easing) => {
+        console.log("beforeDraw");
+    },
+    afterDraw: (chartInstance, easing) => {
+        console.log("afterDraw");
+    },
 
     // Before the datasets are drawn but after scales are drawn
-    beforeDatasetsDraw: function(chartInstance, easing) { },
-    afterDatasetsDraw: function(chartInstance, easing) {
-        var ctx = chartInstance.chart.ctx,
-            notes = chartInstance.data.notes || [],
-            opts = chartInstance.options.notes,
-            noteList = chartInstance._noteList;
+    beforeDatasetsDraw: (chart, _args, options) => { },
+    afterDatasetsDraw: (chart, _args, options) => {
+        console.log("afterDatasetsDraw");
+        console.log(chart);
+        const ctx = chart.ctx,
+            opts = chart.options.plugins.notes,
+            noteList = chart._noteList;
         noteList.resetLayout();
-        noteList.updateLayout(chartInstance, ctx);
+        noteList.updateLayout(chart, ctx);
         // Canvas setup
         ctx.lineWidth = 1;
         ctx.fillStyle = opts.backgroundColor;
         ctx.strokeStyle = opts.borderColor;
 
-        noteList.draw(chartInstance, ctx);
+        noteList.draw(chart, ctx);
     },
 
-    destroy: function(chartInstance) { }
+    destroy: (chartInstance)  => {
+        console.log("destroy");
+    },
 
-});
-module.exports = NotesPlugin;
-Chart.pluginService.register(new NotesPlugin());
+    defaults: {
+        backgroundColor: "rgba(0,0,0,0.8)",
+        borderColor: "rgba(0,0,0,0.8)",
+        fontColor: "#fff",
+        fontStyle: "normal",
+        fontSize: 13,
+        fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
+        fontSpacing: 5,
+        maxWidth: 180,
+        minWidth: 60
+    },
 
-},{"chart.js":1}]},{},[2])
+    additionalOptionScopes: ['']
+};
+Chart.register(notesPlugin);
+console.log("123");
+
+export { notesPlugin as default };
