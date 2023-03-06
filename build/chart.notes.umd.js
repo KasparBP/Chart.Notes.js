@@ -23,20 +23,6 @@
 
     var helpers__namespace = /*#__PURE__*/_interopNamespaceDefault(helpers);
 
-    // Chart.Notes = Chart.Notes || {};
-
-    // Default options if none are provided
-    // const defaultOptions = Chart.Notes.defaults = {
-    //     backgroundColor: "rgba(0,0,0,0.8)",
-    //     borderColor: "rgba(0,0,0,0.8)",
-    //     fontColor: "#fff",
-    //     fontStyle: "normal",
-    //     fontSize: 13,
-    //     fontFamily: "'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",
-    //     fontSpacing: 5,
-    //     maxWidth: 180,
-    //     minWidth: 60
-    // };
     const drawRoundedRect = function (ctx, x, y, width, height, radius) {
         const r = Math.min(radius, height / 2, width / 2);
         const left = x + r;
@@ -137,7 +123,6 @@
             this.position = finalPosition;
         },
         draw: function (chartInstance, ctx) {
-            console.log("draw");
             const originPosition = this.originElement.tooltipPosition(),
                 opts = chartInstance.options.plugins.notes,
                 oldDash = ctx.getLineDash(),
@@ -157,7 +142,7 @@
             this._setFont(chartInstance, ctx);
             ctx.fillStyle = opts.fontColor;
             ctx.fillText(this._textShorted, this.position.x + opts.fontSpacing, 
-                this.position.y + opts.fontSpacing);
+                this.position.y + this.size.height / 2);
             ctx.fillStyle = oldFill;
         },
         hit: function(position) {
@@ -236,38 +221,22 @@
 
     const notesPlugin = {
         id: 'notes',
-        version: "0.1",
-        beforeRegister: () => {
-            console.log("beforeRegister");
-        },
-        afterRegister: () => {
-            console.log("afterRegister");
-        },
-        afterUnregister: () => {
-            console.log("afterUnregister");
-        },
-        afterDataLimits: (chart, args) => {
-            console.log("afterDataLimits");
-        },
-        beforeEvent: (chart, args, options) => {
-            console.log("beforeEvent");
-        },
+        beforeRegister: () => { },
+        afterRegister: () => { },
+        afterUnregister: () => { },
+        afterDataLimits: (chart, args) => { },
+        beforeEvent: (chart, args, options) => { },
         beforeInit: (chartInstance) => {
-            console.log("beforeInit");
             const options = chartInstance.options;
-            // options.notes = helpers.merge(options.notes, Chart.Notes.defaults);
             
             // Chart.JS only support one onClick handler, so save the user configured handler 
             // override it and call it from our own handler instead.
             chartInstance._notesOriginalOnClick = options.onClick;
             options.onClick = NotesOnClick;
         },
-        afterInit: (chartInstance) => {
-            console.log("afterInit");
-        },
+        afterInit: (chartInstance) => { },
 
         resize: (chartInstance, newChartSize) => {
-            console.log("resize");
             // Unfortunately chartInstance.chartArea is not updated at this point
             // so just reset position and recalculate later
             if (chartInstance._noteList) {
@@ -275,20 +244,11 @@
             }
         },
 
-        beforeUpdate: (chart, args, options) => {
-            console.log("beforeUpdate");
-        },
-        afterScaleUpdate: (chartInstance) => {
-            console.log("afterScaleUpdate");
-        },
-        afterDatasetDraw: (chartInstance) => {
-            console.log("afterDatasetDraw");
-        },
-        beforeDatasetsUpdate: (chartInstance) => {
-            console.log("beforeDatasetsUpdate");
-        },
+        beforeUpdate: (chart, args, options) => { },
+        afterScaleUpdate: (chartInstance) => { },
+        afterDatasetDraw: (chartInstance) => { },
+        beforeDatasetsUpdate: (chartInstance) => { },
         afterDatasetsUpdate: function (chartInstance) {
-            console.log("afterDatasetsUpdate");
             chartInstance._noteList = new NoteList();
             helpers__namespace.each(chartInstance.data.datasets, function(dataset, datasetIndex) {
                 const notes = dataset.plugins.notes.notes || [];
@@ -300,29 +260,19 @@
                 }
             }, this);
         },
-        afterUpdate: (chart, args, options) => {
-            console.log("afterUpdate");
-        },
+        afterUpdate: (chart, args, options) => { },
 
         // This is called at the start of a render. It is only called once, even if the animation will run for a number of frames. Use beforeDraw or afterDraw
         // to do something on each animation frame
-        beforeRender: (chartInstance) => {
-            console.log("beforeRender");
-        },
+        beforeRender: (chartInstance) => { },
 
         // Easing is for animation
-        beforeDraw: (chartInstance, easing) => {
-            console.log("beforeDraw");
-        },
-        afterDraw: (chartInstance, easing) => {
-            console.log("afterDraw");
-        },
+        beforeDraw: (chartInstance, easing) => { },
+        afterDraw: (chartInstance, easing) => { },
 
         // Before the datasets are drawn but after scales are drawn
         beforeDatasetsDraw: (chart, _args, options) => { },
         afterDatasetsDraw: (chart, _args, options) => {
-            console.log("afterDatasetsDraw");
-            console.log(chart);
             const ctx = chart.ctx,
                 opts = chart.options.plugins.notes,
                 noteList = chart._noteList;
@@ -355,7 +305,6 @@
         additionalOptionScopes: ['']
     };
     chart_js.Chart.register(notesPlugin);
-    console.log("123");
 
     return notesPlugin;
 
