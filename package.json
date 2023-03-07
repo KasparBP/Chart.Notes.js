@@ -4,6 +4,7 @@
   "description": "Chart.JS Plugin for displaying arbitrary notes",
   "type": "module",
   "main": "build/chart.notes.js",
+  "types": "types/index.d.ts",
   "scripts": {
     "build": "rollup --config"
   },
@@ -20,7 +21,8 @@
   "exports": "./src/chart.notes.js",
   "files": [
     "build",
-    "src"
+    "src",
+    "types/*.d.ts"
   ],
   "dependencies": {
     "chart.js": "^4.2"
