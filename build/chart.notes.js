@@ -28,7 +28,6 @@ const drawRoundedRect = function (ctx, x, y, width, height, radius) {
     ctx.moveTo(x, y);
 };
 const Note = function(originElement, text, extra) {
-    console.log("Note");
     this.originElement = originElement;
     this.text = text;
     this.size = {width: 120, height: 20};
@@ -180,12 +179,11 @@ NoteList.prototype = {
 };
 
 const NotesOnClick = function (event, active) {
-    console.log("NotesOnClick");
     // !!!! 'this' is pointing to the chart controller.
     let chartInstance = this,
         hitNote;
     if (chartInstance._noteList) {
-        const options = chartInstance.options.notes,
+        const options = chartInstance.options.plugins.notes,
             pos = helpers.getRelativePosition(event, chartInstance.chart);
         hitNote = chartInstance._noteList.didHitNote(pos);
         if (hitNote && options && options.onClick) {

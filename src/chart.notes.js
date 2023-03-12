@@ -184,7 +184,7 @@ const NotesOnClick = function (event, active) {
     let chartInstance = this,
         hitNote;
     if (chartInstance._noteList) {
-        const options = chartInstance.options.notes,
+        const options = chartInstance.options.plugins.notes,
             pos = helpers.getRelativePosition(event, chartInstance.chart);
         hitNote = chartInstance._noteList.didHitNote(pos);
         if (hitNote && options && options.onClick) {
